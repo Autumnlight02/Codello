@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="global.css" />
+    <title>Svelte + TS + Vite App</title>
+  </head>
+  <body>
+    <!-- Count is seen as a string-->
+    <codello-Input count="5" id="e">
+      <div>addsasda</div>
+      <div>addsasda</div>
+      <div>addsasda</div>
+      <div>addsasda</div>
+
+      <span slot="name"> P. Sherman </span>
+
+      <span slot="address"> 42 Wallaby Way Sydney </span
+      ><span slot="address"> Parts 2 </span>
+      <span slot="nonexisting"> No slot parent is giving so hiding </span>
+    </codello-Input>
+    <codello-Input count="5" id="e">
+      <div>addsasda</div>
+      <div>addsasda</div>
+      <div>addsasda</div>
+      <div>addsasda</div>
+
+      <span slot="name"> P. Sherman </span>
+
+      <span slot="address"> 42 Wallaby Way Sydney </span
+      ><span slot="address"> Parts 2 </span>
+      <span slot="nonexisting"> No slot parent is giving so hiding </span>
+    </codello-Input>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,1 @@
+export type ErrorInterface = ["error", string, any, string]
