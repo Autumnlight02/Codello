@@ -1,7 +1,9 @@
 import generateUUID from "./generateUUID";
-import deepFreeze from "./deepFreeze"
+import deepFreeze from "./deepFreeze";
+import deepCopy from "./deepCopy";
 const utility = {
   generateUUID,
-  deepFreeze
+  deepFreeze,
+  deepCopy,
 };
 export default utility;

@@ -2,7 +2,7 @@ interface VirtualGroupBaseProps {
   domElements?: VirtualGroupBase["domElements"];
   type: VirtualGroupBase["type"];
   id?: VirtualGroupBase["id"];
-  refferenceGroup?: VirtualGroupBase["refferenceGroup"]; // self refference
+  // refferenceGroup?: VirtualGroupBase["refferenceGroup"]; // self refference
   extension?: VirtualGroupBase["extension"];
 }
 
@@ -18,9 +18,9 @@ export interface VirtualGroupBase {
   domElements: {
     [viewportId: string]: codelloHTMLElement[];
   };
-  id: string;
-  parentVirtualdomElementId: string | null;
-  refferenceGroup: virtualGroup; // self refference
+  id: `${VirtualGroupBase["type"]}-${string}`;
+  parentVirtualdomElementId: VirtualGroupBase["id"] | null;
+  // refferenceGroup: virtualGroup; // self refference
   extension: {
     [extensionId: string]: {
       [key: string]: any;
@@ -42,6 +42,7 @@ export interface virtualComponentGroup extends VirtualGroupBase {
 export interface virtualElementGroup extends VirtualGroupBase {
   type: "element";
   tagName: string; // what is the tagName of the element
+  id: `element-${string}`;
   // #attributes: { [key: string]: string[]; class: string[] }
   children: virtualGroup[];
 }

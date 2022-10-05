@@ -9,6 +9,7 @@ export interface ElementProps {
   children?: virtualElementGroup["children"];
   id?: virtualElementGroup["id"];
   extension?: virtualElementGroup["extension"];
+  type?: "element";
 }
 
 interface props extends ElementProps {
@@ -23,13 +24,23 @@ export class element extends virtualGroup implements virtualElementGroup {
   children: virtualGroup[] = [];
 
   constructor(data: ElementProps) {
-    const superProps: props = data as props;
-    superProps.type = "element";
+    data.tagName = data.tagName.trim();
+    if (typeof data.tagName !== "string" || data.tagName.length === 0) {
+      throw [
+        "error",
+        "element could not be created since the tagName is invalid, please make sure that the type of the tagName is string and that the length is not 0",
+        data,
+        "todo",
+      ] as ErrorInterface;
+    }
+    //todo if the tagname is either c_txt or c_comp then error out due to reserved element types
 
-    super(superProps, undefined);
+    data.type = "element";
+    super(data as props, undefined);
+    codelloApi.dictionary.get["idElementDictionary"][this.id] = this;
 
-    //todo add errorhandling
     this.#tagName = data.tagName;
+
     // if (data.attributes !== undefined) this.#attributes = data.attributes
     this.#attributeMethods = new attributes(data.attributes, this);
   }
@@ -48,10 +59,14 @@ export class element extends virtualGroup implements virtualElementGroup {
   get attributes() {
     return this.#attributeMethods;
   }
+  #render() {}
+  get render() {
+    return this.#render;
+  }
 }
 
 interface Attributes {
-  [key: string]: string[];
+  [key: string]: string[] | string;
   class: string[];
 }
 
@@ -73,8 +88,8 @@ class attributes {
   getAll() {
     //todo add interface
     const data = codelloApi.utility.deepFreeze(
-      structuredClone(this.#attributes)
-    );
+      codelloApi.utility.deepCopy(this.#attributes)
+    ) as Attributes;
     return data;
   }
 
@@ -93,7 +108,7 @@ class attributes {
 
     const alternateGetter = attributeConfig[key]?.set;
     if (alternateGetter === undefined) {
-      this.#attributes[key] = [value];
+      this.#attributes[key] = value;
       return true;
     } else {
       return alternateGetter(this.#owningVirtualElementGroup, value);
@@ -168,7 +183,9 @@ class classList {
     return true;
   }
   getAll(): string[] {
-    const classes = structuredClone(this.#attributeBind["class"]);
+    const classes = codelloApi.utility.deepCopy(
+      this.#attributeBind["class"]
+    ) as string[];
     for (let i = 0; i < classes.length; i++) {
       classes[i] = convertClassNameToSelectorId(classes[i]);
     }
@@ -190,8 +207,32 @@ class children {
     this.#children = children;
     return true;
   }
-  indexOf(id: string | string[]) {}
-  append(id: string | string[]) {}
+  indexOf(id: string | string[]): number | { [id: string]: number } {
+    const children = this.#children;
+    if (Array.isArray(id)) {
+      const entries: { [id: string]: number } = {};
+      for (let i = 0; i < id.length; i++) {
+        entries[id[i]] = -1;
+      }
+      for (let i = 0; i < children.length; i++) {
+        if (entries[children[i].id] !== undefined) entries[children[i].id] = i;
+      }
+      return entries;
+    } else {
+      for (let i = 0; i < children.length; i++) {
+        if (children[i].id === id) return i;
+      }
+      return -1;
+    }
+  }
+  // append(id: string | string[]):boolean | ErrorInterface {
+  //   if (Array.isArray(id)) {
+
+  //   } else {
+
+  //   }
+  // }
+
   prepend(id: string | string[]) {}
   insertAt(id: string | string[], index: number) {}
 }
@@ -205,6 +246,7 @@ type childrenInterface = "";
 
 export interface element {
   get type(): virtualElementGroup["type"];
+  get id(): `element-${string}`;
 }
 
 //TODO replace

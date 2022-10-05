@@ -1,0 +1,3 @@
+onconversion for save, remove empty class attributes, and add them once you load it.
+same goes for extension
+onconversion for save, convert type to t and element to e, component to c and text to t
