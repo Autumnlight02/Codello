@@ -1,11 +1,11 @@
-import { element } from "./element";
+import element from "./element";
+import { virtualGroupBase } from "./virtualGroup";
 import htmlConfig from "./htmlConfig";
-import createElement from "./createElement";
 
 const html = {
-  htmlConfig,
   element,
-  createElement,
+  virtualGroupBase,
+  htmlConfig,
 };
 
 export default html;

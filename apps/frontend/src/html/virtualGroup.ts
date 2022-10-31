@@ -1,34 +1,37 @@
 import codelloApi from "../router";
-import { VirtualGroupBase } from "../interfaces/html";
 import { ErrorInterface } from "../interfaces/error";
+import { codelloHTMLElement } from "../interfaces/html";
 
 export interface VirtualGroupBaseProps {
-  type: VirtualGroupBase["type"];
-  domElements?: VirtualGroupBase["domElements"];
-  id?: VirtualGroupBase["id"];
-  // refferenceGroup?: VirtualGroupBase["refferenceGroup"]; // self refference
-  extension?: VirtualGroupBase["extension"];
+  type: virtualGroupBase["type"];
+  id?: virtualGroupBase["id"];
+  extension?: virtualGroupBase["extension"];
 }
 
-export class virtualGroup implements VirtualGroupBase {
-  domElements: VirtualGroupBase["domElements"] = {};
-  parentVirtualdomElementId: VirtualGroupBase["parentVirtualdomElementId"];
-  #type: VirtualGroupBase["type"];
-  // refferenceGroup: VirtualGroupBase["refferenceGroup"];
-  extension: VirtualGroupBase["extension"];
-  #id: VirtualGroupBase["id"];
+export class virtualGroupBase {
+  domElements: {
+    [htmlRendererId: string]: codelloHTMLElement[];
+  } = {};
+  parentVirtualdomElementId: virtualGroupBase["id"] | null;
+  #type: "component" | "element" | "text" | string;
+  extension: {
+    [extensionId: string]: {
+      [key: string]: any;
+    };
+  };
+  #id: `${virtualGroupBase["type"]}-${string}` | string;
 
   constructor(
-    { domElements, type, extension, id }: VirtualGroupBaseProps,
-    parentVirtualdomElementId: virtualGroup["parentVirtualdomElementId"] = null
+    { type, extension, id }: VirtualGroupBaseProps,
+    parentVirtualdomElementId: virtualGroupBase["parentVirtualdomElementId"] = null
   ) {
-    type = type.trim() as virtualGroup["type"];
+    type = type.trim() as virtualGroupBase["type"];
     if (type === "element" || type === "component" || type === "text") {
     } else {
       throw [
         "error",
         'virtualGroup could not be created since the type is invalid, please make sure that the type is either "element" or "text" or "component"',
-        { domElements, type, extension, id, parentVirtualdomElementId },
+        { type, extension, id, parentVirtualdomElementId },
         "todo",
       ] as ErrorInterface;
     }
@@ -38,12 +41,9 @@ export class virtualGroup implements VirtualGroupBase {
     this.#id =
       id !== undefined
         ? id
-        : (codelloApi.utility.generateUUID(type) as VirtualGroupBase["id"]);
+        : (codelloApi.v1.utility.generateUUID(type) as virtualGroupBase["id"]);
 
     // this.refferenceGroup = this;
-
-    //If domElements is not object //TODO do i keep this?
-    this.domElements = domElements !== undefined ? domElements : {};
 
     this.parentVirtualdomElementId =
       parentVirtualdomElementId !== undefined
@@ -52,6 +52,9 @@ export class virtualGroup implements VirtualGroupBase {
 
     //If extension is not object
     this.extension = extension !== undefined ? extension : {};
+  }
+  get render() {
+    return undefined;
   }
 
   get type() {

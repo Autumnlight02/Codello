@@ -1,29 +1,36 @@
-import { virtualElementGroup } from "../interfaces/html";
-import { virtualGroup } from "./virtualGroup";
 import codelloApi from "../router";
+import { virtualGroupBase } from "./virtualGroup";
 import { ErrorInterface } from "../interfaces/error";
+import { virtualGroup } from "../interfaces/html";
+
 export interface ElementProps {
-  tagName: virtualElementGroup["tagName"];
-  // attributes?: virtualElementGroup["attributes"];
-  attributes?: any;
-  children?: virtualElementGroup["children"];
-  id?: virtualElementGroup["id"];
-  extension?: virtualElementGroup["extension"];
-  type?: "element";
+  tagName: VirtualElementGroup["tagName"];
+  attributes?: Attributes;
+  // children?: VirtualElementGroup["#children"]; //TODO
+  id?: VirtualElementGroup["id"];
+  extension?: VirtualElementGroup["extension"];
 }
 
 interface props extends ElementProps {
   type: "element";
 }
 
-export class element extends virtualGroup implements virtualElementGroup {
+interface Attributes {
+  [key: string]: string[] | string;
+  class: string[];
+}
+
+export default class VirtualElementGroup extends virtualGroupBase {
   #tagName: string;
   #attributes: Attributes = { class: [] };
   #attributeMethods: attributes;
   #classList = new classList(this.#attributes);
-  children: virtualGroup[] = [];
+  #children = new Children();
 
-  constructor(data: ElementProps) {
+  constructor(
+    data: ElementProps,
+    parentVirtualdomElementId?: virtualGroupBase["id"]
+  ) {
     data.tagName = data.tagName.trim();
     if (typeof data.tagName !== "string" || data.tagName.length === 0) {
       throw [
@@ -35,19 +42,35 @@ export class element extends virtualGroup implements virtualElementGroup {
     }
     //todo if the tagname is either c_txt or c_comp then error out due to reserved element types
 
-    data.type = "element";
+    (data as props).type = "element";
     super(data as props, undefined);
-    codelloApi.dictionary.get["idElementDictionary"][this.id] = this;
+    // codelloApi.v1.dictionary.get["idVirtualGroupDictionary"][this.id] =
+    //   this as testa;
 
     this.#tagName = data.tagName;
 
-    // if (data.attributes !== undefined) this.#attributes = data.attributes
-    this.#attributeMethods = new attributes(data.attributes, this);
+    if (data.attributes !== undefined) {
+      if (data.attributes.class === undefined) {
+        data.attributes.class = [];
+      } else {
+        //TODO class handling
+      }
+      this.#attributes = data.attributes;
+
+      this.#attributeMethods = new attributes(data.attributes, this);
+    } else {
+      this.#attributeMethods = new attributes({ class: [] }, this);
+    }
+  }
+
+  get children() {
+    return this.#children;
   }
 
   get tagName() {
     return this.#tagName;
   }
+
   set tagName(tagName) {
     this.#tagName = tagName;
   }
@@ -59,23 +82,19 @@ export class element extends virtualGroup implements virtualElementGroup {
   get attributes() {
     return this.#attributeMethods;
   }
-  #render() {}
-  get render() {
-    return this.#render;
-  }
 }
 
-interface Attributes {
-  [key: string]: string[] | string;
-  class: string[];
+export default interface VirtualElementGroup {
+  get type(): "element";
+  get id(): `element-${string}`;
 }
 
 class attributes {
   #attributes: Attributes;
-  #owningVirtualElementGroup: virtualElementGroup;
+  #owningVirtualElementGroup: VirtualElementGroup;
   constructor(
     attributes: Attributes,
-    owningVirtualElementGroup: virtualElementGroup
+    owningVirtualElementGroup: VirtualElementGroup
   ) {
     this.#attributes = attributes !== undefined ? attributes : { class: [] };
     this.#owningVirtualElementGroup = owningVirtualElementGroup;
@@ -87,14 +106,14 @@ class attributes {
 
   getAll() {
     //todo add interface
-    const data = codelloApi.utility.deepFreeze(
-      codelloApi.utility.deepCopy(this.#attributes)
+    const data = codelloApi.v1.utility.deepFreeze(
+      codelloApi.v1.utility.deepCopy(this.#attributes)
     ) as Attributes;
     return data;
   }
 
   get(key: string): any | ErrorInterface {
-    const attributeConfig = codelloApi.html.htmlConfig.attributeConfig;
+    const attributeConfig = codelloApi.v1.html.htmlConfig.attributeConfig;
 
     const alternateGetter = attributeConfig[key]?.get;
     if (alternateGetter === undefined) {
@@ -104,7 +123,7 @@ class attributes {
     }
   }
   set(key: string, value: string): boolean | ErrorInterface {
-    const attributeConfig = codelloApi.html.htmlConfig.attributeConfig;
+    const attributeConfig = codelloApi.v1.html.htmlConfig.attributeConfig;
 
     const alternateGetter = attributeConfig[key]?.set;
     if (alternateGetter === undefined) {
@@ -115,7 +134,7 @@ class attributes {
     }
   }
   delete(key: string): boolean | ErrorInterface {
-    const attributeConfig = codelloApi.html.htmlConfig.attributeConfig;
+    const attributeConfig = codelloApi.v1.html.htmlConfig.attributeConfig;
 
     const alternateDeleter = attributeConfig[key]?.delete;
     if (alternateDeleter === undefined) {
@@ -142,6 +161,7 @@ class classList {
       return false; // should this only return false?
     }
   }
+
   remove(className: string): boolean {
     const selector = convertClassNameToSelectorId(className);
     const index = this.#attributeBind["class"].indexOf(selector);
@@ -150,10 +170,12 @@ class classList {
     }
     return true;
   }
+
   at(index: number): string | undefined {
     const item = this.#attributeBind["class"].at(index);
     return item === undefined ? undefined : convertSelectorIdToClass(item);
   }
+
   // boolean, true if toggled, false if prevented
   toggle(className: string): boolean {
     const selector = convertClassNameToSelectorId(className);
@@ -183,7 +205,7 @@ class classList {
     return true;
   }
   getAll(): string[] {
-    const classes = codelloApi.utility.deepCopy(
+    const classes = codelloApi.v1.utility.deepCopy(
       this.#attributeBind["class"]
     ) as string[];
     for (let i = 0; i < classes.length; i++) {
@@ -193,18 +215,26 @@ class classList {
   }
 }
 
-class children {
-  #children: element["children"];
-  constructor(children: element["children"]) {
-    this.#children = children !== undefined ? children : [];
+class Children {
+  #children: virtualGroup[] = [];
+  constructor() {
+    // this.#children = children !== undefined ? children : [];
   }
   getAll() {
     const copy = this.#children.concat();
     Object.freeze(copy);
     return copy;
   }
-  setAll(children: element["children"]) {
-    this.#children = children;
+  getAllIds() {
+    const ids = [];
+    for (let i = 0; i < this.#children.length; i++) {
+      ids.push(this.#children[i].id);
+    }
+    return ids;
+  }
+  setAll(children: string[] | string) {
+    //todo
+    // this.#children = children;
     return true;
   }
   indexOf(id: string | string[]): number | { [id: string]: number } {
@@ -225,31 +255,17 @@ class children {
       return -1;
     }
   }
-  // append(id: string | string[]):boolean | ErrorInterface {
-  //   if (Array.isArray(id)) {
-
-  //   } else {
-
-  //   }
-  // }
-
-  prepend(id: string | string[]) {}
-  insertAt(id: string | string[], index: number) {}
+  append(id: string | string[]) /*:boolean | ErrorInterface*/ {
+    if (Array.isArray(id)) {
+    } else {
+    }
+  }
+  // prepend(id: string | string[]) {}
+  // insertAt(id: string | string[], index: number) {}
+  // replace(id:string | replaceId: string | string[])
+  //todo replace
 }
 
-//todo add
-type childrenInterface = "";
-
-// interface attributes {
-//   get [key: string]: string[]
-// }
-
-export interface element {
-  get type(): virtualElementGroup["type"];
-  get id(): `element-${string}`;
-}
-
-//TODO replace
 function convertClassNameToSelectorId(string: string) {
   return string;
 }
